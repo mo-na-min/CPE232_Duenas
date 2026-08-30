@@ -1,0 +1,26 @@
+---
+- name: Configure Apache and PHP on CentOS
+  hosts: centos
+  become: true
+  tasks:
+
+    - name: Install Apache and PHP packages
+      dnf:
+        name:
+          - httpd
+          - php
+        state: latest
+        update_cache: yes
+
+    - name: Start and Enable apache service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Allow firewalld
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
