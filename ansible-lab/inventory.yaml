@@ -50,3 +50,7 @@ all:
     db_servers:
       children:
         centos:
+
+    workstations:
+      hosts:
+        ubuntu1:
