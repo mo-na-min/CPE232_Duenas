@@ -1,0 +1,21 @@
+---
+- name: Install Prometheus
+  hosts: monitoring
+  become: true
+  vars:
+    prometheus_retention_time: "90d"
+    prometheus_scrape_configs:
+      - job-name: "prometheus"
+        static_configs:
+          - targets:
+            - "localhost:9090"
+      - job_name: "node"
+        static_configs:
+          - targets:
+              - "192.168.56.104:9100"
+              - "192.168.56.105:9100"
+              - "192.168.56.108:9100"
+            lables:
+              env: "production"
+  roles:
+    - prometheus

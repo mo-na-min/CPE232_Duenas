@@ -1,0 +1,100 @@
+---
+# prometheus.yaml
+- hosts: all
+  become: true
+  tasks:
+
+    # Ubuntu
+
+    - name: Create Prometheus Group
+      ansible.builtin.group:
+        name: "{{ prometheus_group }}"
+        system: true
+        state: latest
+      become: true
+
+    - name: Create Prometheus User
+      ansible.builtin.user:
+        name: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        shell: /usr/sbin/nologin
+        system: true
+        create_home: false
+      become: true
+
+    - name: Create Prometheus Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        mode: "0755"
+      loop"
+        - "{{ prometheus_config_dir }}"
+        - "{{ prometheus_config_dir }}/rules"
+        - "{{ prometheus_config_dir }}/file_sd"
+        - "{{ prometheus_data_dir }}"
+      become: true
+
+    - name: Check current Prometheus version
+      ansible.builtin.command: "{{ prometheus_install_dir }}/prometheus -- version"
+      register: current_version
+      changed_when: false
+      failed_when: false
+
+    - name: Download Prometheus
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}.tar.gz"
+        dest: "/tmp/prometheus-{{ prometheus_version }}.tar.gz"
+        mode: "0644"
+      when: current_version.rc != 0 or prometheus_version not in (current_version.stdout | default("))
+
+    - name: Extract Prometheus archive
+      ansible.builtin.unarchive:
+        src: "/tmp/prometheus-{{ prometheus_version }}.tar.gz"
+        dest: /tmp/
+        remote_src: true
+      when: current_version != 0 or prometheus_version not in (current_version.stdout | default("))
+
+    - name: Install Prometheus Binaries
+      ansible.builtin.copy:
+        src: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}/{{ item }}"
+        dest: "{{ prometheus_install_dir }}/{{ item }}"
+        owner: root
+        group: root
+        mode: preserve
+        remote_src: true
+      loop:
+        - prometheus
+        - promtool
+      become: true
+      notify: Restart prometheus
+      when: current_version.rc != 0 or prometheus_version not in (current_version.stdout | default("))
+
+    - name: Install console templates and libraries
+      ansible.builtin.copy:
+        src: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}/{{ item }}"
+        dest: "{{ prometheus_config_dir }}/{{ item }}"
+        owner: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        mode: preserve
+        remote_src: true
+      loop:
+        - consoles
+        - console_libraries
+      become: true
+      when: current_version.rc != 0 or prometheus_version not in (current_version.stdout | defualt("))
+
+    - name: Clear up downloaded archive
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/prometheus-{{ prometheus_version }}.tar.gz"
+        - "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}"
+
+
+
+
+
+    # CentOS

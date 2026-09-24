@@ -1,0 +1,38 @@
+---
+- name: Deploy Prometheus Configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+    validate: "{{ prometheus_install_dir }}/promtool check config %s"
+  become: true
+  notify: Reload prometheus
+
+- name: Deploy systemd service file
+  ansible.builtin.template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart prometheus
+
+- name: Enable and start Prometheus
+  ansible.builtin.systemd:
+    name: prometheus
+    state: started
+    enable: true
+    daemon_reload: true
+  become: true
+
+- name: Verify Prometheus is running
+  ansible.builtin.url:
+    url: "http://localhost:{{ prometheus_listen_port }}/-/healthy"
+    status_code: 200
+  register: health_check
+  until: health_check.status == 200
+  retries: 10
+  delay: 3

@@ -1,0 +1,8 @@
+---
+- name: Install Prometheus (Ubuntu)
+  ansible.builtin.include_tasks: prometheus_install.yaml
+
+- name: Configure Prometheus (Ubuntu)
+  ansible.builtin.include_tasks: prometheus_config.yaml.j2
+
+

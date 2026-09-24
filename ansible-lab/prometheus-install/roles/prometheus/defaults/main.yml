@@ -1,0 +1,41 @@
+# main_prometheus.yaml
+
+prometheus_version: "3.11.3"
+prometheus_platform: "linux-amd64"
+
+# system user
+prometheus_user: "prometheus"
+prometheus_group: "prometheus"
+
+# Directories
+prometheus_install_dir: "/usr/local/bin"
+prometheus_config_dir: "/etc/prometheus"
+prometheus_data_dir: "/var/lib/prometheus"
+
+# Network settings
+prometheus_listen_address: "0.0.0.0"
+prometheus_listen_port: 9090
+
+# Data retention
+prometheus_retension_time: "30d"
+prometheus_retension_size: "0"
+
+# Scrape settings
+prometheus_scrape_interval: "15s"
+prometheus_evaluation_interval: "15s"
+
+# Resource limits
+prometheus_memory_limit: "2G"
+
+# Basic scrape targets (self-monitoring)
+prometheus_scope_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+        - "localhost:{{ prometheus_listen_port }}"
+
+# Alertmanager settings
+prometheus_alertmanager_targets: []
+
+# Rule files
+prometheus_rule_files: []

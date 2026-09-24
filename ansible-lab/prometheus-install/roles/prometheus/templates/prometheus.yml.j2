@@ -1,0 +1,70 @@
+global:
+	scrape_interval: {{ prometheus_scrape_interval }}
+	evaluation_interval: {{ prometheus_evaluation_interval }}
+	external_labels:
+		monitor: 'ansible-managed'
+
+storage:
+	tsdb:
+		retention:
+			time: {{ prometheus_retention_time }}
+{% if prometheus_retention_size != "0" %}
+			size: {{ prometheus_retention_size }}
+{% endif %}
+
+{% if prometheus_rule_files | length > 0 %}
+rule_files:
+{% for rule_file in prometheus_rule_files %)
+	- "{{ rule_file }}"
+{% endfor %}
+{% endif %}
+
+{% if prometheus_alertmanager_targets | length > 0 %}
+alerting:
+	alartmanagers:
+		- static_configs:
+			- targets:
+{% for target in prometheus_alertmanager_targets %}
+				- "{{ target }}"
+{% endfor %}
+{% endif %}
+
+scrape_configs:
+{% for jobs in prometheus_scrape_configs %}
+	- job_name: "{{ job.job_name }}"
+{% if job.metrics_path is defined %}
+	- metrics_path: "{{ job.metrics_path }}"
+{% endif %}
+{% if job.scrape_interval is defined %}
+	- scrape_interval: {{job.scrape_interval }}
+{% endif %}
+{% if job.static_configs is defined %}
+	static_configs:
+{% for static_config in job.static_configs %}
+	- targets:
+{% for target in static_config.targets %}
+	- "{{ target }}"
+{% endfor %}
+{% if static_config.labels is defined %}
+	labels:
+{% for key, value in static_config.labels.items() %}
+		{{ key }}: "{{ value }}"
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if job.file_sd_configs is defined %}
+	file_sd_configs:
+{% for sd_config in job.file_sd_configs %}
+		- files:
+{% for file in sd_config.files %}
+			- "{{ file }}"
+{% endfor %}
+		refresh_interval: {{ sd_config.refresh_interval | default('5m') }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+
+
