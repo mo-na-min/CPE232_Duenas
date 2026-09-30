@@ -5,27 +5,17 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=simple
 User={{ prometheus_user }}
 Group={{ prometheus_group }}
+Type=simple
+ExecStart={{ prometheus_install_dir }}/prometheus \
+  --config.file={{ prometheus_config_dir }}/prometheus.yml \
+  --storage.tsdb.path={{ prometheus_db_dir }} \
+  --web.console.templates={{ prometheus_config_dir }}/consoles \
+  --web.console.libraries={{ prometheus_config_dir }}/console_libraries
+
 ExecReload=/bin/kill -HUP $MAINPID
-ExecStart={{ prometheus_install_dir }}/prometheus_config.yaml.j2 \
-	--config.file={{ prometheus_config_dir }}/prometheus.yaml \
-	--storage.tsdb.path={{ prometheus_data_dir }} \
-	--web.listen-address={{ prometheus_listen_address }}:{{ prometheus_listen_port }} \
-	--web.console.templates={{ prometheus_config_dir }}/consoles \
-	--web.console.libraries={{ prometheus_config_dir }}/console_libraries \
-	--web.enable-lifecycle
-
-SyslogIdentifier=prometheus
-Restart=always
-RestartSec=5
-MemoryMax={{ prometheus_memory_limit }}
-
-# Security hardening
-NoNewPrivileges=true
-ProtectSystem=full
-ProtectHome=true
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target

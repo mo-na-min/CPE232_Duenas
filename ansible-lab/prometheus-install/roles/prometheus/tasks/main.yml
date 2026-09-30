@@ -1,8 +1,14 @@
 ---
-- name: Install Prometheus (Ubuntu)
-  ansible.builtin.include_tasks: prometheus_install.yaml
+- name: Pre-requisite packages installation
+  package:
+    name:
+      - tar
+      - gzip
+      - curl
+    state: present
 
-- name: Configure Prometheus (Ubuntu)
-  ansible.builtin.include_tasks: prometheus_config.yaml.j2
+- name: Execute installation tasks
+  include_tasks: install.yml
 
-
+- name: execute configuration tasks
+  include_tasks: configure.yml
